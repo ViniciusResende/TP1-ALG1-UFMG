@@ -4,6 +4,60 @@
 #include <getopt.h>
 #include <string.h>
 
+
+struct Stack {
+  int maxsize; 
+  int top;
+  int *items;
+};
+ 
+struct Stack* newStack(int capacity) {
+  struct Stack *newStackPt = (struct Stack*) malloc(sizeof(struct Stack));
+
+  newStackPt->maxsize = capacity;
+  newStackPt->top = -1;
+  newStackPt->items = (int*) malloc(capacity * sizeof(int));
+
+  return newStackPt;
+}
+ 
+int stackCurrentSize(struct Stack *pt) {
+  return pt->top + 1;
+}
+
+int stackIsEmpty(struct Stack *pt) {
+  return pt->top == -1;
+}
+
+int stackIsFull(struct Stack *pt) {
+  return pt->top == pt->maxsize - 1;
+}
+
+void stackPush(struct Stack *pt, int element) {
+  if (stackIsFull(pt)) {
+    printf("Overflow\nProgram Terminated\n");
+    exit(EXIT_FAILURE);
+  }
+
+  pt->items[++pt->top] = element;
+}
+ 
+int stackPeek(struct Stack *pt) {
+  if (!stackIsEmpty(pt)) {
+    return pt->items[pt->top];
+  } else
+    exit(EXIT_FAILURE);
+}
+ 
+int stackPop(struct Stack *pt) {
+  if (stackIsEmpty(pt)) {
+    printf("Underflow\nProgram Terminated\n");
+    exit(EXIT_FAILURE);
+  }
+
+  return pt->items[pt->top--];
+}
+
 struct ConfigStruct {
   char inputFile[100];
 };
@@ -106,6 +160,70 @@ int* DFS(struct Graph G, int startVertex) {
   return markedVector;
 }
 
+void _dfsFillOrder(struct Graph G, int vertex, int* markedVector, struct Stack* S) {
+  markedVector[vertex] = 1;
+
+  // linha -> coluna
+  for(int i = 0; i < G.verticesAmount; i++) {
+    if(G.adjacentMatrix[vertex][i] && !markedVector[i]) {
+      _dfsFillOrder(G, i, markedVector, S);
+    }
+  }
+
+  stackPush(S, vertex);
+}
+
+void _dfsGetSCCs(struct Graph G, int vertex, int* markedVector, int* SCCArr, int SCCCount) {
+  markedVector[vertex] = 1;
+
+  // coluna -> linha
+  for(int i = 0; i < G.verticesAmount; i++) {
+    if(G.adjacentMatrix[i][vertex] && !markedVector[i]) {
+      _dfsGetSCCs(G, i, markedVector, SCCArr, SCCCount);
+    }
+  }
+
+  SCCArr[vertex] = SCCCount;
+}
+
+void Kosaraju(struct Graph G) {
+  int* StronglyConnectedComponents = (int*) malloc(G.verticesAmount * sizeof(int));
+  int counter = 1;
+
+  int* markedVector = (int*) malloc(G.verticesAmount * sizeof(int));
+  for(int i = 0; i < G.verticesAmount; i++) markedVector[i] = 0;
+
+  struct Stack* S = newStack(G.verticesAmount);
+
+  for(int i = 0; i < G.verticesAmount; i++) {
+    if(!markedVector[i])
+      _dfsFillOrder(G, i, markedVector, S);
+  }
+
+  for(int i = 0; i < G.verticesAmount; i++) markedVector[i] = 0;
+
+  printf("ordem topológica:  ");
+  while(!stackIsEmpty(S)) {
+    int currentVertex = stackPop(S);
+    printf("%d ", currentVertex);
+    if(!markedVector[currentVertex]) {
+      _dfsGetSCCs(G, currentVertex, markedVector, StronglyConnectedComponents, counter);
+      counter++;
+    }
+  }
+  printf("\n");
+
+  for (int i = 0; i < G.verticesAmount; i += 2) {
+    if(StronglyConnectedComponents[i] == StronglyConnectedComponents[i+1]) {
+      printf("nao \n");
+      return;
+    }     
+  }
+
+  printf("sim \n");
+  return;
+}
+
 struct ProposalSurveyInfo {
   unsigned int firstProposal;
   unsigned int secondProposal;
@@ -115,9 +233,12 @@ struct ProposalSurveyInfo {
 void handleAddAdjacentMatrix(int** matrix, struct ProposalSurveyInfo info) {
   const int NULL_PROPOSAL_VOTE = 0;
 
-  if(info.firstProposal == NULL_PROPOSAL_VOTE)
-    info.firstProposal = info.secondProposal;
-  else if(info.secondProposal == NULL_PROPOSAL_VOTE)
+  if(info.firstProposal == NULL_PROPOSAL_VOTE) {
+    if(info.secondProposal != NULL_PROPOSAL_VOTE)
+      info.firstProposal = info.secondProposal;
+    else
+      return;
+  } else if(info.secondProposal == NULL_PROPOSAL_VOTE)
     info.secondProposal = info.firstProposal;
 
   // if(!info.proposalsWereRejected) {
@@ -175,20 +296,22 @@ int main(int argc, char ** argv) {
       handleAddAdjacentMatrix(proposalGraph.adjacentMatrix, currentProposalSurveyInfo);
     }
 
-    int solutionFound = FALSE;
+    Kosaraju(proposalGraph);
 
-    for(int i = 0; i < matrixDimension; i += 2) {
-      int* graphMarkedVisits = DFS(proposalGraph, i);
-      int* graphMarkedVisits2 = DFS(proposalGraph, i + 1);
+    // int solutionFound = FALSE;
 
-      if((graphMarkedVisits[i] == graphMarkedVisits[i+1]) && (graphMarkedVisits2[i] == graphMarkedVisits2[i+1])) {
-        printf("nao \n");
-        solutionFound = TRUE;
-        break;
-      }
-    }
+    // for(int i = 0; i < matrixDimension; i += 2) {
+    //   int* graphMarkedVisits = DFS(proposalGraph, i);
+    //   int* graphMarkedVisits2 = DFS(proposalGraph, i + 1);
 
-    if(!solutionFound) printf("sim \n");
+    //   if((graphMarkedVisits[i] == graphMarkedVisits[i+1]) && (graphMarkedVisits2[i] == graphMarkedVisits2[i+1])) {
+    //     printf("nao \n");
+    //     solutionFound = TRUE;
+    //     break;
+    //   }
+    // }
+
+    // if(!solutionFound) printf("sim \n");
 
     // printf("\n");
     // printMatrix(proposalGraph.adjacentMatrix, matrixDimension);
