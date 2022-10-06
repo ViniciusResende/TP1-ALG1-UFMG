@@ -9,7 +9,6 @@
       "type": "cppdbg",
       "request": "launch",
       "program": "${workspaceFolder}/main",
-      "args": ["-i", "input.txt"],
       "stopAtEntry": false,
       "cwd": "${fileDirname}",
       "environment": [],

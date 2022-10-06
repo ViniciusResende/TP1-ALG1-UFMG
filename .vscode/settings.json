@@ -4,6 +4,9 @@
     ".stylelintrc": "json",
     ".prettierrc": "json",
     "*.tsx": "typescriptreact",
-    "fstream": "cpp"
+    "fstream": "cpp",
+    "algorithm": "c",
+    "ostream": "c",
+    "campanha.h": "c"
   }
 }
