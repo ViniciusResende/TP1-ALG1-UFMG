@@ -22,12 +22,12 @@ int main() {
 
     if((followersAmount == 0) && (governmentProposalAmount == 0)) return 0;
 
-    int matrixDimension = (governmentProposalAmount * 2); 
-    int** adjacentMatrix = createNullSquareMatrix(matrixDimension);
+    int listDimension = (governmentProposalAmount * 2); 
+    struct List** adjacentList = createEmptyAdjacentList(listDimension);
 
     struct Graph proposalGraph;
-    proposalGraph.adjacentMatrix = adjacentMatrix;
-    proposalGraph.verticesAmount = matrixDimension;
+    proposalGraph.adjacentList = adjacentList;
+    proposalGraph.verticesAmount = listDimension;
 
     struct ProposalSurveyInfo currentProposalSurveyInfo;
 
@@ -35,12 +35,12 @@ int main() {
       scanfRes = scanf("%u", &currentProposalSurveyInfo.firstProposal);
       scanfRes = scanf("%u", &currentProposalSurveyInfo.secondProposal);
       currentProposalSurveyInfo.proposalsWereRejected = FALSE;
-      handleAddAdjacentMatrix(proposalGraph.adjacentMatrix, currentProposalSurveyInfo);
+      handleAddAdjacentList(proposalGraph.adjacentList, currentProposalSurveyInfo);
 
       scanfRes = scanf("%u", &currentProposalSurveyInfo.firstProposal);
       scanfRes = scanf("%u", &currentProposalSurveyInfo.secondProposal);
       currentProposalSurveyInfo.proposalsWereRejected = TRUE;
-      handleAddAdjacentMatrix(proposalGraph.adjacentMatrix, currentProposalSurveyInfo);
+      handleAddAdjacentList(proposalGraph.adjacentList, currentProposalSurveyInfo);
     }
 
     Kosaraju(proposalGraph);

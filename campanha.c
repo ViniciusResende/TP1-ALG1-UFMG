@@ -44,6 +44,59 @@ int stackPop(struct Stack *pt) {
   return pt->items[pt->top--];
 }
 
+struct List* newList() {
+  struct List *newList;
+  struct Node *temp;
+  newList = (struct List *) malloc(sizeof(struct List));
+  temp = (struct Node *) malloc(sizeof(struct Node));
+
+  if(temp == NULL) {
+    printf("nOut of Memory Space:n\n");
+    exit(EXIT_FAILURE);
+  }
+
+  temp->value = -1;
+  temp->next = NULL;
+
+  newList->head = temp;
+  newList->tail = newList->head;
+  newList->size = 0;
+  
+  return newList;
+}
+
+void listPushBack(struct List* list, int value) {
+  struct Node *temp;
+  temp = (struct Node *)malloc(sizeof(struct Node));
+
+  if(temp==NULL) {
+    printf("nOut of Memory Space:n\n");
+    return;
+  }
+
+  temp->next = NULL;
+  temp->value = value;
+
+  list->tail->next = temp;
+  list->tail = temp;
+}
+
+// int* listRetrieveAsVector(struct List* list) {
+//   int* newVector = (int*) malloc(list->size * sizeof(int));
+//   struct Node* nodePtr = list->head;
+
+//   if(list->size == 0) {
+//     printf("nCan't retrieve empty list as vector:n\n");
+//     return newVector;
+//   }
+
+//   for(int i = 0; i < list->size - 1; i++) {
+//     nodePtr = nodePtr->next;
+//     newVector[i] = nodePtr->value;
+//   }
+
+//   return newVector;
+// }
 // ---------------- HELPERS ----------------
 
 int** createNullSquareMatrix(int matrixDimension) {
@@ -57,6 +110,26 @@ int** createNullSquareMatrix(int matrixDimension) {
   }
 
   return mat;
+}
+
+struct List** createEmptyAdjacentList(int listDimension) {
+  struct List** list = (struct List**) malloc(listDimension * sizeof(struct List*));
+  for(int i = 0; i < listDimension; i++) {
+    list[i] = newList();
+  }
+
+  return list;
+}
+
+struct List** invertAdjacentList(struct List** L, int listSize) {
+  struct List** newList = createEmptyAdjacentList(listSize);
+
+  for(int i = 0; i < listSize; i++) {
+    for(struct Node* it = L[i]->head->next; it != NULL; it = it->next)
+      listPushBack(newList[it->value], i);
+  }
+
+  return newList;
 }
 
 int handleMatrixIdx(int initialIdx, int neg) {
@@ -94,23 +167,21 @@ void printArray(int* array, int size) {
 void _dfsFillOrder(struct Graph G, int vertex, int* markedVector, struct Stack* S) {
   markedVector[vertex] = 1;
 
-  // linha -> coluna
-  for(int i = 0; i < G.verticesAmount; i++) {
-    if(G.adjacentMatrix[vertex][i] && !markedVector[i]) {
-      _dfsFillOrder(G, i, markedVector, S);
+  for(struct Node* it = G.adjacentList[vertex]->head->next; it != NULL; it = it->next) {
+    if(!markedVector[it->value]) {
+      _dfsFillOrder(G, it->value, markedVector, S);
     }
   }
 
   stackPush(S, vertex);
 }
 
-void _dfsGetSCCs(struct Graph G, int vertex, int* markedVector, int* SCCArr, int SCCCount) {
+void _dfsGetSCCs(struct Graph inverseGraph, int vertex, int* markedVector, int* SCCArr, int SCCCount) {
   markedVector[vertex] = 1;
 
-  // coluna -> linha
-  for(int i = 0; i < G.verticesAmount; i++) {
-    if(G.adjacentMatrix[i][vertex] && !markedVector[i]) {
-      _dfsGetSCCs(G, i, markedVector, SCCArr, SCCCount);
+  for(struct Node* it = inverseGraph.adjacentList[vertex]->head->next; it != NULL; it = it->next) {
+    if(!markedVector[it->value]) {
+      _dfsGetSCCs(inverseGraph, it->value, markedVector, SCCArr, SCCCount);
     }
   }
 
@@ -133,23 +204,45 @@ void Kosaraju(struct Graph G) {
 
   for(int i = 0; i < G.verticesAmount; i++) markedVector[i] = 0;
 
+  struct Graph inverseGraph;
+  inverseGraph.adjacentList = invertAdjacentList(G.adjacentList, G.verticesAmount);
+  inverseGraph.verticesAmount = G.verticesAmount;
+
+  // printf("normal\n");
+  // for(int i = 0; i < G.verticesAmount; i ++) {
+  //   printf("%d -> ", i);
+  //   for(struct Node* it = G.adjacentList[i]->head->next; it != NULL; it = it->next) {
+  //     printf("%d ", it->value);
+  //   }
+  //   printf("\n");
+  // }
+
+  // printf("inverso\n");
+  // for(int i = 0; i < inverseGraph.verticesAmount; i ++) {
+  //   printf("%d -> ", i);
+  //   for(struct Node* it = inverseGraph.adjacentList[i]->head->next; it != NULL; it = it->next) {
+  //     printf("%d ", it->value);
+  //   }
+  //   printf("\n");
+  // }
+
   while(!stackIsEmpty(S)) {
     int currentVertex = stackPop(S);
 
     if(!markedVector[currentVertex]) {
-      _dfsGetSCCs(G, currentVertex, markedVector, StronglyConnectedComponents, counter);
+      _dfsGetSCCs(inverseGraph, currentVertex, markedVector, StronglyConnectedComponents, counter);
       counter++;
     }
   }
 
   for (int i = 0; i < G.verticesAmount; i += 2) {
     if(StronglyConnectedComponents[i] == StronglyConnectedComponents[i+1]) {
-      printf("nao \n");
+      printf("nao\n");
       return;
     }     
   }
 
-  printf("sim \n");
+  printf("sim\n");
   return;
 }
 
@@ -168,4 +261,19 @@ void handleAddAdjacentMatrix(int** matrix, struct ProposalSurveyInfo info) {
 
   matrix[handleMatrixIdx(info.firstProposal - 1, !info.proposalsWereRejected)][handleMatrixIdx(info.secondProposal - 1, info.proposalsWereRejected)] = 1;
   matrix[handleMatrixIdx(info.secondProposal - 1, !info.proposalsWereRejected)][handleMatrixIdx(info.firstProposal - 1, info.proposalsWereRejected)] = 1;
+}
+
+void handleAddAdjacentList(struct List** adjList, struct ProposalSurveyInfo info) {
+  const int NULL_PROPOSAL_VOTE = 0;
+
+  if(info.firstProposal == NULL_PROPOSAL_VOTE) {
+    if(info.secondProposal != NULL_PROPOSAL_VOTE)
+      info.firstProposal = info.secondProposal;
+    else
+      return;
+  } else if(info.secondProposal == NULL_PROPOSAL_VOTE)
+    info.secondProposal = info.firstProposal;
+
+  listPushBack(adjList[handleMatrixIdx(info.firstProposal - 1, !info.proposalsWereRejected)], handleMatrixIdx(info.secondProposal - 1, info.proposalsWereRejected));
+  listPushBack(adjList[handleMatrixIdx(info.secondProposal - 1, !info.proposalsWereRejected)], handleMatrixIdx(info.firstProposal - 1, info.proposalsWereRejected));
 }

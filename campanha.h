@@ -21,9 +21,26 @@ void stackPush(struct Stack *pt, int element);
 
 int stackPop(struct Stack *pt);
 
+struct Node {
+  int value;
+  struct Node *next;
+};
+
+struct List {
+  struct Node *head;
+  struct Node *tail;
+  int size;
+};
+
+struct List* newList();
+
+void listPushBack(struct List* list, int value);
+
 // ---------------- HELPERS ----------------
 
 int** createNullSquareMatrix(int matrixDimension);
+
+struct List** createEmptyAdjacentList(int listDimension);
 
 int handleMatrixIdx(int initialIdx, int neg);
 
@@ -34,7 +51,7 @@ void printArray(int* array, int size);
 // ---------------- ALGORITHMS ----------------
 
 struct Graph {
-  int **adjacentMatrix;
+  struct List **adjacentList;
   int verticesAmount;
 };
 
@@ -53,3 +70,5 @@ struct ProposalSurveyInfo {
 };
 
 void handleAddAdjacentMatrix(int** matrix, struct ProposalSurveyInfo info);
+
+void handleAddAdjacentList(struct List** adjList, struct ProposalSurveyInfo info);
