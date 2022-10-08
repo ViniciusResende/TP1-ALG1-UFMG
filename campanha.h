@@ -11,8 +11,6 @@ struct Stack {
 
 struct Stack* newStack(int capacity);
 
-int stackCurrentSize(struct Stack *pt);
-
 int stackIsEmpty(struct Stack *pt);
 
 int stackIsFull(struct Stack *pt);
@@ -38,15 +36,11 @@ void listPushBack(struct List* list, int value);
 
 // ---------------- HELPERS ----------------
 
-int** createNullSquareMatrix(int matrixDimension);
-
 struct List** createEmptyAdjacentList(int listDimension);
 
-int handleMatrixIdx(int initialIdx, int neg);
+struct List** invertAdjacentList(struct List** L, int listSize);
 
-void printMatrix(int** matrix, int matrixDimension);
-
-void printArray(int* array, int size);
+int handleCalculateVertexValue(int initialIdx, int neg);
 
 // ---------------- ALGORITHMS ----------------
 
@@ -68,7 +62,5 @@ struct ProposalSurveyInfo {
   unsigned int secondProposal;
   int proposalsWereRejected;
 };
-
-void handleAddAdjacentMatrix(int** matrix, struct ProposalSurveyInfo info);
 
 void handleAddAdjacentList(struct List** adjList, struct ProposalSurveyInfo info);
