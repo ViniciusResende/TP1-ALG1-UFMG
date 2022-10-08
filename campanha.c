@@ -13,10 +13,6 @@ struct Stack* newStack(int capacity) {
 
   return newStackPt;
 }
- 
-int stackCurrentSize(struct Stack *pt) {
-  return pt->top + 1;
-}
 
 int stackIsEmpty(struct Stack *pt) {
   return pt->top == -1;
@@ -44,49 +40,70 @@ int stackPop(struct Stack *pt) {
   return pt->items[pt->top--];
 }
 
+struct List* newList() {
+  struct List *newList;
+  struct Node *temp;
+  newList = (struct List *) malloc(sizeof(struct List));
+  temp = (struct Node *) malloc(sizeof(struct Node));
+
+  if(temp == NULL) {
+    printf("nOut of Memory Space:n\n");
+    exit(EXIT_FAILURE);
+  }
+
+  temp->value = -1;
+  temp->next = NULL;
+
+  newList->head = temp;
+  newList->tail = newList->head;
+  newList->size = 0;
+  
+  return newList;
+}
+
+void listPushBack(struct List* list, int value) {
+  struct Node *temp;
+  temp = (struct Node *)malloc(sizeof(struct Node));
+
+  if(temp==NULL) {
+    printf("nOut of Memory Space:n\n");
+    return;
+  }
+
+  temp->next = NULL;
+  temp->value = value;
+
+  list->tail->next = temp;
+  list->tail = temp;
+}
+
 // ---------------- HELPERS ----------------
 
-int** createNullSquareMatrix(int matrixDimension) {
-  int i,j;
-
-  int** mat = (int**) malloc(matrixDimension* sizeof(int*));
-  for(i = 0; i < matrixDimension; i++) {
-    mat[i] = (int*) malloc(matrixDimension * sizeof(int));
-    for(j = 0; j < matrixDimension; j++)
-      mat[i][j] = 0;
+struct List** createEmptyAdjacentList(int listDimension) {
+  struct List** list = (struct List**) malloc(listDimension * sizeof(struct List*));
+  for(int i = 0; i < listDimension; i++) {
+    list[i] = newList();
   }
 
-  return mat;
+  return list;
 }
 
-int handleMatrixIdx(int initialIdx, int neg) {
-  int newIndex = initialIdx * 2;
-  newIndex = neg ? newIndex + 1 : newIndex;
+struct List** invertAdjacentList(struct List** L, int listSize) {
+  struct List** newList = createEmptyAdjacentList(listSize);
 
-  return newIndex;
-}
-
-void printMatrix(int** matrix, int matrixDimension) {
-  // print columns identifiers
-  printf("%5s"," ");
-  for (int i = 0; i < matrixDimension; i++) printf("%4d ", i);
-  printf("\n");
-  printf("\n");
-
-
-  for (int i = 0; i < matrixDimension; i++) {
-    printf("%4d ", i);
-    for(int j = 0; j < matrixDimension; j++) {
-      printf("%4d ", matrix[i][j]);
-    }
-    printf("\n");
+  for(int i = 0; i < listSize; i++) {
+    for(struct Node* it = L[i]->head->next; it != NULL; it = it->next)
+      listPushBack(newList[it->value], i);
   }
+
+  return newList;
 }
 
-void printArray(int* array, int size) {
-  printf("\n");
-  for(int i = 0; i < size; i++) printf("%2d ", array[i]);
-  printf("\n");
+int handleCalculateVertexValue(int initialVert, int neg) {
+  int newVertex = initialVert * 2;
+  newVertex = neg ? newVertex + 1 : newVertex;
+
+  return newVertex;
 }
 
 // ---------------- ALGORITHMS ----------------
@@ -94,23 +111,21 @@ void printArray(int* array, int size) {
 void _dfsFillOrder(struct Graph G, int vertex, int* markedVector, struct Stack* S) {
   markedVector[vertex] = 1;
 
-  // linha -> coluna
-  for(int i = 0; i < G.verticesAmount; i++) {
-    if(G.adjacentMatrix[vertex][i] && !markedVector[i]) {
-      _dfsFillOrder(G, i, markedVector, S);
+  for(struct Node* it = G.adjacentList[vertex]->head->next; it != NULL; it = it->next) {
+    if(!markedVector[it->value]) {
+      _dfsFillOrder(G, it->value, markedVector, S);
     }
   }
 
   stackPush(S, vertex);
 }
 
-void _dfsGetSCCs(struct Graph G, int vertex, int* markedVector, int* SCCArr, int SCCCount) {
+void _dfsGetSCCs(struct Graph inverseGraph, int vertex, int* markedVector, int* SCCArr, int SCCCount) {
   markedVector[vertex] = 1;
 
-  // coluna -> linha
-  for(int i = 0; i < G.verticesAmount; i++) {
-    if(G.adjacentMatrix[i][vertex] && !markedVector[i]) {
-      _dfsGetSCCs(G, i, markedVector, SCCArr, SCCCount);
+  for(struct Node* it = inverseGraph.adjacentList[vertex]->head->next; it != NULL; it = it->next) {
+    if(!markedVector[it->value]) {
+      _dfsGetSCCs(inverseGraph, it->value, markedVector, SCCArr, SCCCount);
     }
   }
 
@@ -133,29 +148,33 @@ void Kosaraju(struct Graph G) {
 
   for(int i = 0; i < G.verticesAmount; i++) markedVector[i] = 0;
 
+  struct Graph inverseGraph;
+  inverseGraph.adjacentList = invertAdjacentList(G.adjacentList, G.verticesAmount);
+  inverseGraph.verticesAmount = G.verticesAmount;
+
   while(!stackIsEmpty(S)) {
     int currentVertex = stackPop(S);
 
     if(!markedVector[currentVertex]) {
-      _dfsGetSCCs(G, currentVertex, markedVector, StronglyConnectedComponents, counter);
+      _dfsGetSCCs(inverseGraph, currentVertex, markedVector, StronglyConnectedComponents, counter);
       counter++;
     }
   }
 
   for (int i = 0; i < G.verticesAmount; i += 2) {
     if(StronglyConnectedComponents[i] == StronglyConnectedComponents[i+1]) {
-      printf("nao \n");
+      printf("nao\n");
       return;
     }     
   }
 
-  printf("sim \n");
+  printf("sim\n");
   return;
 }
 
 // ---------------- BUSINESS RULES ----------------
 
-void handleAddAdjacentMatrix(int** matrix, struct ProposalSurveyInfo info) {
+void handleAddAdjacentList(struct List** adjList, struct ProposalSurveyInfo info) {
   const int NULL_PROPOSAL_VOTE = 0;
 
   if(info.firstProposal == NULL_PROPOSAL_VOTE) {
@@ -166,6 +185,6 @@ void handleAddAdjacentMatrix(int** matrix, struct ProposalSurveyInfo info) {
   } else if(info.secondProposal == NULL_PROPOSAL_VOTE)
     info.secondProposal = info.firstProposal;
 
-  matrix[handleMatrixIdx(info.firstProposal - 1, !info.proposalsWereRejected)][handleMatrixIdx(info.secondProposal - 1, info.proposalsWereRejected)] = 1;
-  matrix[handleMatrixIdx(info.secondProposal - 1, !info.proposalsWereRejected)][handleMatrixIdx(info.firstProposal - 1, info.proposalsWereRejected)] = 1;
+  listPushBack(adjList[handleCalculateVertexValue(info.firstProposal - 1, !info.proposalsWereRejected)], handleCalculateVertexValue(info.secondProposal - 1, info.proposalsWereRejected));
+  listPushBack(adjList[handleCalculateVertexValue(info.secondProposal - 1, !info.proposalsWereRejected)], handleCalculateVertexValue(info.firstProposal - 1, info.proposalsWereRejected));
 }
