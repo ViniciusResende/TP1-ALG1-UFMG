@@ -79,7 +79,7 @@ void listPushBack(struct List* list, int value) {
 
 // ---------------- HELPERS ----------------
 
-struct List** createEmptyAdjacentList(int listDimension) {
+struct List** createEmptyAdjacencyList(int listDimension) {
   struct List** list = (struct List**) malloc(listDimension * sizeof(struct List*));
   for(int i = 0; i < listDimension; i++) {
     list[i] = newList();
@@ -88,8 +88,8 @@ struct List** createEmptyAdjacentList(int listDimension) {
   return list;
 }
 
-struct List** invertAdjacentList(struct List** L, int listSize) {
-  struct List** newList = createEmptyAdjacentList(listSize);
+struct List** invertAdjacencyList(struct List** L, int listSize) {
+  struct List** newList = createEmptyAdjacencyList(listSize);
 
   for(int i = 0; i < listSize; i++) {
     for(struct Node* it = L[i]->head->next; it != NULL; it = it->next)
@@ -99,19 +99,12 @@ struct List** invertAdjacentList(struct List** L, int listSize) {
   return newList;
 }
 
-int handleCalculateVertexValue(int initialVert, int neg) {
-  int newVertex = initialVert * 2;
-  newVertex = neg ? newVertex + 1 : newVertex;
-
-  return newVertex;
-}
-
 // ---------------- ALGORITHMS ----------------
 
 void _dfsFillOrder(struct Graph G, int vertex, int* markedVector, struct Stack* S) {
-  markedVector[vertex] = 1;
+  markedVector[vertex] = TRUE;
 
-  for(struct Node* it = G.adjacentList[vertex]->head->next; it != NULL; it = it->next) {
+  for(struct Node* it = G.adjacencyList[vertex]->head->next; it != NULL; it = it->next) {
     if(!markedVector[it->value]) {
       _dfsFillOrder(G, it->value, markedVector, S);
     }
@@ -121,9 +114,9 @@ void _dfsFillOrder(struct Graph G, int vertex, int* markedVector, struct Stack* 
 }
 
 void _dfsGetSCCs(struct Graph inverseGraph, int vertex, int* markedVector, int* SCCArr, int SCCCount) {
-  markedVector[vertex] = 1;
+  markedVector[vertex] = TRUE;
 
-  for(struct Node* it = inverseGraph.adjacentList[vertex]->head->next; it != NULL; it = it->next) {
+  for(struct Node* it = inverseGraph.adjacencyList[vertex]->head->next; it != NULL; it = it->next) {
     if(!markedVector[it->value]) {
       _dfsGetSCCs(inverseGraph, it->value, markedVector, SCCArr, SCCCount);
     }
@@ -132,7 +125,7 @@ void _dfsGetSCCs(struct Graph inverseGraph, int vertex, int* markedVector, int* 
   SCCArr[vertex] = SCCCount;
 }
 
-void Kosaraju(struct Graph G) {
+int Kosaraju(struct Graph G) {
   int* StronglyConnectedComponents = (int*) malloc(G.verticesAmount * sizeof(int));
   int counter = 1;
 
@@ -149,7 +142,7 @@ void Kosaraju(struct Graph G) {
   for(int i = 0; i < G.verticesAmount; i++) markedVector[i] = 0;
 
   struct Graph inverseGraph;
-  inverseGraph.adjacentList = invertAdjacentList(G.adjacentList, G.verticesAmount);
+  inverseGraph.adjacencyList = invertAdjacencyList(G.adjacencyList, G.verticesAmount);
   inverseGraph.verticesAmount = G.verticesAmount;
 
   while(!stackIsEmpty(S)) {
@@ -162,19 +155,23 @@ void Kosaraju(struct Graph G) {
   }
 
   for (int i = 0; i < G.verticesAmount; i += 2) {
-    if(StronglyConnectedComponents[i] == StronglyConnectedComponents[i+1]) {
-      printf("nao\n");
-      return;
-    }     
+    if(StronglyConnectedComponents[i] == StronglyConnectedComponents[i+1])
+      return FALSE;    
   }
 
-  printf("sim\n");
-  return;
+  return TRUE;
 }
 
 // ---------------- BUSINESS RULES ----------------
 
-void handleAddAdjacentList(struct List** adjList, struct ProposalSurveyInfo info) {
+int handleCalculateVertexValue(int initialVert, int neg) {
+  int newVertex = initialVert * 2;
+  newVertex = neg ? newVertex + 1 : newVertex;
+
+  return newVertex;
+}
+
+void handleAddAdjacencyList(struct List** adjList, struct ProposalSurveyInfo info) {
   const int NULL_PROPOSAL_VOTE = 0;
 
   if(info.firstProposal == NULL_PROPOSAL_VOTE) {
