@@ -2,10 +2,13 @@
 #include <stdlib.h>
 #include <campanha.h>
 
-/// @brief 
-/// @param argc 
-/// @param argv 
-/// @return 
+/**
+ * @brief Business Rule function, responsible for being the interface between the
+ * system functions and the console, reading values, passing them to the internal
+ * functions and, by the end, printing the entrance result.
+ * 
+ * @returns Default integer value 0.
+ */
 int main() {
   int scanfRes = 0;
 
