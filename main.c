@@ -7,8 +7,6 @@
 /// @param argv 
 /// @return 
 int main() {
-  const int FALSE = 0;
-  const int TRUE = 1;
   int scanfRes = 0;
 
   unsigned int followersAmount = 0;
@@ -23,10 +21,10 @@ int main() {
     if((followersAmount == 0) && (governmentProposalAmount == 0)) return 0;
 
     int listDimension = (governmentProposalAmount * 2); 
-    struct List** adjacentList = createEmptyAdjacentList(listDimension);
+    struct List** adjacentList = createEmptyAdjacencyList(listDimension);
 
     struct Graph proposalGraph;
-    proposalGraph.adjacentList = adjacentList;
+    proposalGraph.adjacencyList = adjacentList;
     proposalGraph.verticesAmount = listDimension;
 
     struct ProposalSurveyInfo currentProposalSurveyInfo;
@@ -35,15 +33,20 @@ int main() {
       scanfRes = scanf("%u", &currentProposalSurveyInfo.firstProposal);
       scanfRes = scanf("%u", &currentProposalSurveyInfo.secondProposal);
       currentProposalSurveyInfo.proposalsWereRejected = FALSE;
-      handleAddAdjacentList(proposalGraph.adjacentList, currentProposalSurveyInfo);
+      handleAddAdjacencyList(proposalGraph.adjacencyList, currentProposalSurveyInfo);
 
       scanfRes = scanf("%u", &currentProposalSurveyInfo.firstProposal);
       scanfRes = scanf("%u", &currentProposalSurveyInfo.secondProposal);
       currentProposalSurveyInfo.proposalsWereRejected = TRUE;
-      handleAddAdjacentList(proposalGraph.adjacentList, currentProposalSurveyInfo);
+      handleAddAdjacencyList(proposalGraph.adjacencyList, currentProposalSurveyInfo);
     }
 
-    Kosaraju(proposalGraph);
+    int graphIsSatisfiable = Kosaraju(proposalGraph);
+
+    if(graphIsSatisfiable)
+      printf("sim\n");
+    else
+      printf("nao\n");
   } while((followersAmount != 0) && (governmentProposalAmount != 0));
   
   return 0;
